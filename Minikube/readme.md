@@ -48,3 +48,42 @@ kube-system   kube-proxy-tl7kr                   1/1     Running   0            
 kube-system   kube-scheduler-minikube            1/1     Running   0               3m8s
 kube-system   storage-provisioner                1/1     Running   1 (2m31s ago)   3m6s
 ```
+
+## Task 2 — Simple Application
+
+- Create a Deployment with one replica of any lightweight application.
+- Expose it outside the cluster using a *NodePort* Service.
+- Verify that the application responds in your browser.
+---
+### Solution:
+*Using nginx*
+
+- create deployment.yml from template:
+```
+kubectl create deployment nginx --image=nginx:latest --dry-run=client -o yaml > deployment.yml
+---->
+apiVersion: apps/v1
+
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:latest
+        name: nginx
+        resources: {}
+status: {}
+
+```
