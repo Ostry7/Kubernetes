@@ -97,3 +97,53 @@ kubectl apply -f deployment.yml
 kubectl get deployments
 kubectl get pods
 ```
+
+---
+### Set NodePort to expose the port outside
+
+To expose the port outside the cluster we need to create _service.yml_ file:
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30036
+    protocol: TCP
+```
+
+Then just apply the changes deployment:
+```
+kubectl apply -f deployment.yml
+```
+and service:
+```
+kubectl apply -f service.yml
+```
+### Verification:
+Check the services:
+```
+kubectl get svc
+---->
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1     <none>        443/TCP        13d
+nginx-service   NodePort    10.98.75.55   <none>        80:30036/TCP   86s
+```
+Check minikube services:
+```
+minikube service _appName_
+---->
+minikube service nginx-service
+---->
+┌───────────┬───────────────┬─────────────┬───────────────────────────┐
+│ NAMESPACE │     NAME      │ TARGET PORT │            URL            │
+├───────────┼───────────────┼─────────────┼───────────────────────────┤
+│ default   │ nginx-service │ 80          │ http://192.168.49.2:30036 │
+└───────────┴───────────────┴─────────────┴───────────────────────────┘
+```
