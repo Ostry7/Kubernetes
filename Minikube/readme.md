@@ -85,5 +85,15 @@ spec:
         name: nginx
         resources: {}
 status: {}
-
+```
+---
+### Apply deployment.yml:
+```
+kubectl apply -f deployment.yml
+```
+---
+### Check deployment status:
+```
+kubectl get deployments
+kubectl get pods
 ```
