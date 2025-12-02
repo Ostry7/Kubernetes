@@ -148,7 +148,7 @@ minikube service nginx-service
 └───────────┴───────────────┴─────────────┴───────────────────────────┘
 ```
 
-### Task 3 Scaling and Rollout []
+### Task 3 Scaling and Rollout [X]
 ---
 
 - Increase the number of replicas in the Deployment.
