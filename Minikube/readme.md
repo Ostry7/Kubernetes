@@ -196,3 +196,72 @@ After saving the deployment.yml lets apply the changes:
 ```
 kubectl apply -f deployment.yml
 ```
+
+To check the changes first we need to grab the pod name:
+```
+kubectl get pods -l app=nginx -o wide
+---->
+NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+nginx-5b6f67b6-7985b   1/1     Running   0          63s   10.244.0.10   minikube   <none>           <none>
+nginx-5b6f67b6-thdsv   1/1     Running   0          66s   10.244.0.9    minikube   <none>           <none>
+```
+
+Then we can check nginx version per pod:
+```
+kubectl describe pod nginx-5b6f67b6-7985b
+---->
+[...]
+Image:          nginx:1.29
+[...]
+```
+
+If the deployment is updated (i.e. new image version) Kubernetes will perform *rolling update*:
+- it will create new pods with new image version one by one.
+- it gradually removes old pods only when new ones are working properly.
+This ensures that there is always a minimum number of pods available in the cluster and the application does not stop working.
+
+### Rollback the update to the previous version
+
+To rollback the changes we need to check the *rollout history*
+```
+kubectl rollout history deployment **<deployment-name>**
+---->
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         Switched to new nginx version
+```
+
+Right now we can perform the *rollback update:*
+```
+kubectl rollout undo deployment nginx --to-revision=**NUMBER OF REVISION**
+---->
+kubectl rollout undo deployment nginx --to-revision=1
+---->
+deployment.apps/nginx rolled back
+```
+
+Check the rollout status:
+```
+kubectl rollout status deployment nginx
+---->
+deployment "nginx" successfully rolled out
+```
+Then we can again check the nginx image version:
+```
+kubectl get pods -l app=nginx -o wide
+---->
+NAME                     READY   STATUS    RESTARTS   AGE    IP            NODE       NOMINATED NODE   READINESS GATES
+nginx-7c5d8bf9f7-mskjf   1/1     Running   0          113s   10.244.0.11   minikube   <none>           <none>
+nginx-7c5d8bf9f7-mtmlb   1/1     Running   0          108s   10.244.0.12   minikube   <none>           <none>
+```
+
+```
+kubectl describe pod nginx-7c5d8bf9f7-mskjf
+---->
+[...]
+Image:          nginx:latest
+[...]
+```
+
+**The rollout won't change deployment.yml or service.yml files. Kubernetes takes this files only as a source of input, not as something that it must update or change later**
