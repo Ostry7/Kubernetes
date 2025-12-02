@@ -147,3 +147,52 @@ minikube service nginx-service
 │ default   │ nginx-service │ 80          │ http://192.168.49.2:30036 │
 └───────────┴───────────────┴─────────────┴───────────────────────────┘
 ```
+
+### Task 3 Scaling and Rollout []
+---
+
+- Increase the number of replicas in the Deployment.
+- Perform a rolling update to a different image version.
+- Roll back the update to the previous version.
+- Check the rollout history.
+---
+### Solution
+Increasing the number of replicas in the *deployment.yml* we do this changing the *replicas: X* value
+example:
+```
+[...]
+spec:
+  replicas: 2 #previous: 1
+[...]
+```
+This changing means that Kubernetes will create as much pods as *replicas* value.
+
+### Check ReplicaSet
+```
+kubectl get rs
+---->
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-7c5d8bf9f7   2         2         2       22h
+```
+
+>How it works? Kubernes checks *DESIRED STATE* (at the begining we had 1pod so kubernetes will create additionally 1pod to achive all pods in desired state.) **All pods are up and running simultaneously.**
+
+### Pods traffic
+
+In our case we have *NodePort* set. It works as a LoadBalancer -> **all incoming traffic evenly directed to all available pods.** It means in our case we have 2 pods one request may go to the first pod another to the second and so on.
+
+### Perform a rolling update to a different image version.
+
+First of all lets change the nginx version:
+```
+[...]
+      containers:
+      - image: nginx:1.29 #previous: nginx:latest
+        name: nginx
+[...]
+```
+
+After saving the deployment.yml lets apply the changes:
+```
+kubectl apply -f deployment.yml
+```
