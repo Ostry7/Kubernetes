@@ -148,7 +148,7 @@ minikube service nginx-service
 └───────────┴───────────────┴─────────────┴───────────────────────────┘
 ```
 
-### Task 3 Scaling and Rollout [v]
+## Task 3 Scaling and Rollout [v]
 ---
 
 - Increase the number of replicas in the Deployment.
@@ -265,3 +265,5 @@ Image:          nginx:latest
 ```
 
 **The rollout won't change deployment.yml or service.yml files. Kubernetes takes this files only as a source of input, not as something that it must update or change later**
+
+## Task 4 - Application Configuration [Secret and ConfigMap]

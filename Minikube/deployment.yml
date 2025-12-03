@@ -1,22 +1,55 @@
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  labels:
+#    app: nginx
+#  name: nginx
+#spec:
+#  replicas: 2 #previous: 1
+#  selector:
+#    matchLabels:
+#      app: nginx
+#  strategy: {}
+#  template:
+#    metadata:
+#      labels:
+#        app: nginx
+#    spec:
+#      containers:
+#      - image: nginx:1.29
+#        name: nginx
+#        resources: {}
+#status: {}
+
+
+###Task 4
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: nginx
-  name: nginx
+  name: mongodatabase
 spec:
-  replicas: 2 #previous: 1
   selector:
     matchLabels:
-      app: nginx
-  strategy: {}
+      app: mongodb
   template:
     metadata:
       labels:
-        app: nginx
+        app: mongodb
     spec:
       containers:
-      - image: nginx:1.29
-        name: nginx
-        resources: {}
-status: {}
+      - name: mongodb
+        image: mongo:latest
+        envFrom:
+        - secretRef:
+            name: mongo-secrets
+        resources: {0}   
+      - name: mongo_express
+        image: mongo-express:latest
+        envFrom:
+        - secretRef:
+            name: mongo-secrets
+        - configMapRef:
+            name: mongodb
+        resources: {0}
+        
