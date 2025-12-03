@@ -19,6 +19,7 @@ kind: Service
 metadata:
   name: mongo
 spec:
+  type: NodePort
   selector:
     app: mongodb
   ports:

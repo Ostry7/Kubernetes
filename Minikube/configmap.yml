@@ -4,6 +4,5 @@ kind: ConfigMap
 metadata:
   name: mongodb
 data:
-  ME_CONFIG_MONGODB_URL: mongodb://$(ME_CONFIG_MONGODB_AUTH_USERNAME):$(ME_CONFIG_MONGODB_AUTH_PASSWORD)@mongo:27017/
   ME_CONFIG_BASICAUTH_ENABLED: "true"
 

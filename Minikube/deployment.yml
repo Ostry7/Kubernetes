@@ -1,4 +1,3 @@
-deployment:
 #apiVersion: apps/v1
 #kind: Deployment
 #metadata:
@@ -40,18 +39,42 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:latest
-        envFrom:
-        - secretRef:
-            name: mongo-secrets
+        image: mongo:4.2
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_USERNAME
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_PASSWORD        
         resources: {0}   
-      - name: mongo_express
+      - name: mongo-express
         image: mongo-express:latest
+        env:
+          - name: ME_CONFIG_MONGODB_SERVER
+            value: mongodb      # nazwa kontenera Mongo w tym samym Podzie
+          - name: ME_CONFIG_MONGODB_AUTH_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_DATABASE
+          - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_USERNAME
+          - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_PASSWORD
         envFrom:
-        - secretRef:
-            name: mongo-secrets
-        - configMapRef:
-            name: mongodb
+          - configMapRef:
+              name: mongodb
         resources: {0}
         
 
