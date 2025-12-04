@@ -266,4 +266,48 @@ Image:          nginx:latest
 
 **The rollout won't change deployment.yml or service.yml files. Kubernetes takes this files only as a source of input, not as something that it must update or change later**
 
-## Task 4 - Application Configuration [Secret and ConfigMap]
+## Task 4 - Application Configuration (Secret and ConfigMap) []
+- Create a ConfigMap containing some application configuration.
+- Create a Secret with sensitive data.
+- Run an application that reads values from both the ConfigMap and the Secret.
+- Verify that the configuration is applied correctly (e.g., via environment variables or mounted files).
+
+### Solution
+
+First of all lets create a deployment without environmental variables:
+```
+###Task 4
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodatabase
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        resources: {0}   
+      - name: mongo_express
+        image: mongo-express:latest
+        resources: {0}      
+```
+
+Then we need to create a `configmap.yml` with some env variables:
+```
+config map:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb
+data:
+  ME_CONFIG_BASICAUTH_ENABLED: "true"
+```
+`ConfigMap` is related with *POD* and not related with container.

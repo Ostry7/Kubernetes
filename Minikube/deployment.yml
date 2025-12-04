@@ -54,9 +54,11 @@ spec:
         resources: {0}   
       - name: mongo-express
         image: mongo-express:latest
+        ports:
+          - containerPort: 8081
         env:
           - name: ME_CONFIG_MONGODB_SERVER
-            value: mongodb      # nazwa kontenera Mongo w tym samym Podzie
+            value: mongo
           - name: ME_CONFIG_MONGODB_AUTH_DATABASE
             valueFrom:
               secretKeyRef:
