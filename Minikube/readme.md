@@ -323,7 +323,7 @@ echo -n "root" | base64
 cm9vdA==
 ```
 
-To add secrets we can create `secret.yml:`
+And then we can add secrets we can create `secret.yml:`
 
 ```yml
 secret:
@@ -338,3 +338,25 @@ data:
   ME_CONFIG_MONGODB_AUTH_PASSWORD: bW9qZWhhc2xvMTIz
 
 ```
+
+To use base64 encoded secrets we can add following to deployment.yml:
+```yml
+       env:
+          - name: ME_CONFIG_MONGODB_AUTH_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_DATABASE
+          - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_USERNAME
+          - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secrets
+                key: ME_CONFIG_MONGODB_AUTH_PASSWORD
+```
+
+---
