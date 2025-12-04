@@ -15,23 +15,23 @@
 ---
 ### Solution:
 - Install Minikube:
-```
+```bash
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
 
 - Run minikube cluster:
-```
+```bash
 minikube start --driver=docker
 ```
 
 - Install kubectl:
-```
+```bash
 sudo snap install kubectl --classic
 ```
 
 - check Kubernetes status:
-```
+```bash
 kubectl get nodes
 ---->
 NAME       STATUS   ROLES           AGE    VERSION
@@ -59,7 +59,7 @@ kube-system   storage-provisioner                1/1     Running   1 (2m31s ago)
 *Using nginx*
 
 - create deployment.yml from template:
-```
+```yml
 kubectl create deployment nginx --image=nginx:latest --dry-run=client -o yaml > deployment.yml
 ---->
 apiVersion: apps/v1
@@ -88,12 +88,12 @@ status: {}
 ```
 ---
 ### Apply deployment.yml:
-```
+```bash
 kubectl apply -f deployment.yml
 ```
 ---
 ### Check deployment status:
-```
+```bash
 kubectl get deployments
 kubectl get pods
 ```
@@ -102,7 +102,7 @@ kubectl get pods
 ### Set NodePort to expose the port outside
 
 To expose the port outside the cluster we need to create _service.yml_ file:
-```
+```yml
 apiVersion: v1
 kind: Service
 metadata:
@@ -119,16 +119,16 @@ spec:
 ```
 
 Then just apply the changes deployment:
-```
+```bash
 kubectl apply -f deployment.yml
 ```
 and service:
-```
+```bash
 kubectl apply -f service.yml
 ```
 ### Verification:
 Check the services:
-```
+```bash
 kubectl get svc
 ---->
 NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
@@ -136,7 +136,7 @@ kubernetes      ClusterIP   10.96.0.1     <none>        443/TCP        13d
 nginx-service   NodePort    10.98.75.55   <none>        80:30036/TCP   86s
 ```
 Check minikube services:
-```
+```bash
 minikube service _appName_
 ---->
 minikube service nginx-service
@@ -159,7 +159,7 @@ minikube service nginx-service
 ### Solution
 Increasing the number of replicas in the *deployment.yml* we do this changing the *replicas: X* value
 example:
-```
+```yml
 [...]
 spec:
   replicas: 2 #previous: 1
@@ -168,7 +168,7 @@ spec:
 This changing means that Kubernetes will create as much pods as *replicas* value.
 
 ### Check ReplicaSet
-```
+```bash
 kubectl get rs
 ---->
 NAME               DESIRED   CURRENT   READY   AGE
@@ -184,7 +184,7 @@ In our case we have *NodePort* set. It works as a LoadBalancer -> **all incoming
 ### Perform a rolling update to a different image version.
 
 First of all lets change the nginx version:
-```
+```yml
 [...]
       containers:
       - image: nginx:1.29 #previous: nginx:latest
@@ -193,12 +193,12 @@ First of all lets change the nginx version:
 ```
 
 After saving the deployment.yml lets apply the changes:
-```
+```bash
 kubectl apply -f deployment.yml
 ```
 
 To check the changes first we need to grab the pod name:
-```
+```bash
 kubectl get pods -l app=nginx -o wide
 ---->
 NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
@@ -207,7 +207,7 @@ nginx-5b6f67b6-thdsv   1/1     Running   0          66s   10.244.0.9    minikube
 ```
 
 Then we can check nginx version per pod:
-```
+```bash
 kubectl describe pod nginx-5b6f67b6-7985b
 ---->
 [...]
@@ -223,7 +223,7 @@ This ensures that there is always a minimum number of pods available in the clus
 ### Rollback the update to the previous version
 
 To rollback the changes we need to check the *rollout history*
-```
+```bash
 kubectl rollout history deployment **<deployment-name>**
 ---->
 deployment.apps/nginx 
@@ -233,7 +233,7 @@ REVISION  CHANGE-CAUSE
 ```
 
 Right now we can perform the *rollback update:*
-```
+```bash
 kubectl rollout undo deployment nginx --to-revision=**NUMBER OF REVISION**
 ---->
 kubectl rollout undo deployment nginx --to-revision=1
@@ -242,13 +242,13 @@ deployment.apps/nginx rolled back
 ```
 
 Check the rollout status:
-```
+```bash
 kubectl rollout status deployment nginx
 ---->
 deployment "nginx" successfully rolled out
 ```
 Then we can again check the nginx image version:
-```
+```bash
 kubectl get pods -l app=nginx -o wide
 ---->
 NAME                     READY   STATUS    RESTARTS   AGE    IP            NODE       NOMINATED NODE   READINESS GATES
@@ -256,7 +256,7 @@ nginx-7c5d8bf9f7-mskjf   1/1     Running   0          113s   10.244.0.11   minik
 nginx-7c5d8bf9f7-mtmlb   1/1     Running   0          108s   10.244.0.12   minikube   <none>           <none>
 ```
 
-```
+```bash
 kubectl describe pod nginx-7c5d8bf9f7-mskjf
 ---->
 [...]
@@ -275,7 +275,7 @@ Image:          nginx:latest
 ### Solution
 
 First of all lets create a deployment without environmental variables:
-```
+```yml
 ###Task 4
 
 apiVersion: apps/v1
@@ -301,7 +301,7 @@ spec:
 ```
 
 Then we need to create a `configmap.yml` with some env variables:
-```
+```yml
 config map:
 apiVersion: v1
 kind: ConfigMap
@@ -310,4 +310,31 @@ metadata:
 data:
   ME_CONFIG_BASICAUTH_ENABLED: "true"
 ```
-`ConfigMap` is related with *POD* and not related with container.
+`ConfigMap` is related with *POD* and not related with container. So that container could use `ConfigMap` we need to specify it at `env:` section in `deployment`.
+
+---
+### Secrets
+Kubernetes Secrets are objects used to store and manage sensitive information such as passwords, OAuth tokens, SSH keys, and API keys. The primary purpose of Secrets is to reduce the risk of exposing sensitive data while deploying applications on Kubernetes.
+
+We need to encode all sensitive data to store in secret objects:
+```bash
+echo -n "root" | base64
+---->
+cm9vdA==
+```
+
+To add secrets we can create `secret.yml:`
+
+```yml
+secret:
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secrets
+type: Opaque
+data:
+  ME_CONFIG_MONGODB_AUTH_DATABASE: ZGI= 
+  ME_CONFIG_MONGODB_AUTH_USERNAME: cm9vdA==
+  ME_CONFIG_MONGODB_AUTH_PASSWORD: bW9qZWhhc2xvMTIz
+
+```
