@@ -51,7 +51,7 @@ spec:
               secretKeyRef:
                 name: mongo-secrets
                 key: ME_CONFIG_MONGODB_AUTH_PASSWORD        
-        resources: {0}   
+        resources: {}   
       - name: mongo-express
         image: mongo-express:latest
         ports:
@@ -77,6 +77,6 @@ spec:
         envFrom:
           - configMapRef:
               name: mongodb
-        resources: {0}
+        resources: {}
         
 
