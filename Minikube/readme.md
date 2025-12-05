@@ -266,7 +266,7 @@ Image:          nginx:latest
 
 **The rollout won't change deployment.yml or service.yml files. Kubernetes takes this files only as a source of input, not as something that it must update or change later**
 
-## Task 4 - Application Configuration (Secret and ConfigMap) []
+## Task 4 - Application Configuration (Secret and ConfigMap) [v]
 - Create a ConfigMap containing some application configuration.
 - Create a Secret with sensitive data.
 - Run an application that reads values from both the ConfigMap and the Secret.
@@ -357,6 +357,14 @@ To use base64 encoded secrets we can add following to deployment.yml:
               secretKeyRef:
                 name: mongo-secrets
                 key: ME_CONFIG_MONGODB_AUTH_PASSWORD
+```
+
+After that we need to apply all changes. Main sequence of applies:
+```bash
+kubectl apply -f mongo-secret.yml
+kubectl apply -f mongo-configmap.yml
+kubectl apply -f deployment.yml
+kubectl apply -f service.yml
 ```
 
 ---
