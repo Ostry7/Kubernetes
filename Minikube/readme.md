@@ -368,3 +368,14 @@ kubectl apply -f service.yml
 ```
 
 ---
+
+## Task 5 - Working with Volumes []
+
+- Create a PersistentVolume using *hostPath*.
+- Create a matching PersistentVolumeClaim.
+- Attach the volume to a new Pod.
+- Write a file inside the Pod and ensure it persists after restarting the Pod.
+
+### Solution
+
+We can use *hostPath* to create a local PersistentVolume. A *hostPath* volume mounts a file or directory from the host node's file system into pod.
