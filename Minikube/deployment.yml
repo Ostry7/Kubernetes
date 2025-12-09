@@ -95,5 +95,5 @@ spec:
       volumes:
       - name: mongo-storage
         persistentVolumeClaim:
-          claimName: local-pv
+          claimName: mongo-claim
 
