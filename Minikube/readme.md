@@ -369,7 +369,7 @@ kubectl apply -f service.yml
 
 ---
 
-## Task 5 - Working with Volumes []
+## Task 5 - Working with Volumes [v]
 
 - Create a PersistentVolume using *hostPath*.
 - Create a matching PersistentVolumeClaim.
@@ -379,3 +379,40 @@ kubectl apply -f service.yml
 ### Solution
 
 We can use *hostPath* to create a local PersistentVolume. A *hostPath* volume mounts a file or directory from the host node's file system into pod.
+
+| FEATURE                            | **hostPath**   | **storage-provisioner (dynamic PV)**|
+| -----------------------------------| -------------------|:-------------------------------:|
+| Where the data are stored ?        | In the node directory (VM Minikube or physical node)         | In the Minikube host directory (via provisioner), in a “safe” location that will survive a cluster restart
+| Data durability (after pod restart)| ❌ No — VM/hostPath disappears          | ✅ Yes — the data is in the host directory and the PV is dynamically created. 
+| Scalability                        | Weak — each node has its own catalog, it is difficult to connect several pods to one PV.        | Good — provisioner manages PV and you can easily create multiple PVCs
+| Pros                               | Simple, quick to test | Safe, durable, closer to production
+| Cons| Temporary in Minikube, susceptible to accidental deletion | A little more abstraction, requires addon/StorageClass
+
+To avoid data loss I prefer to use *storage-provisioner* on Minikube.
+
+Storage-provisioner installation:
+```bash
+minikube addons enable storage-provisioner
+```
+Then delete already created PV and PVCs:
+```bash
+kubectl delete pvc mongo-claim
+kubectl delete pv local-pv-mongo
+```
+
+And we need only PVC (Claim) with `storageClassName: standard` :
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+```
+
+Minikube will automatically create a PV in the Minikube host directory (~/.minikube/...), which will survive a VM restart.
