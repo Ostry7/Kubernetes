@@ -428,3 +428,64 @@ Minikube will automatically create a PV in the Minikube host directory (~/.minik
 ---
 
 ### Solution
+
+First of all we need to enable the *NGINX Ingress* controller:
+
+```bash
+minikube addons enable ingress
+```
+
+Verify that *Ingress* is running:
+
+```bash
+kubectl get pods -n ingress-nginx
+---->
+NAME                                       READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-6pxf4       0/1     Completed   0          5m20s
+ingress-nginx-admission-patch-v9jzz        0/1     Completed   1          5m20s
+ingress-nginx-controller-9cc49f96f-b82gm   1/1     Running     0          5m20s
+```
+
+Then we can deploy simple app (we're using deployment from Task2):
+```yml
+#deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 2 #previous: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:1.29
+        name: nginx
+        resources: {}
+status: {}
+```
+```yml
+#service
+service:
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30036
+    protocol: TCP
+```
