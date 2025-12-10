@@ -416,3 +416,144 @@ spec:
 ```
 
 Minikube will automatically create a PV in the Minikube host directory (~/.minikube/...), which will survive a VM restart.
+
+
+
+## Task 6 — Ingress []
+
+- Install an Ingress Controller in Minikube.
+- Expose the application from Task 2 using an Ingress.
+- Configure a custom hostname and verify access through it.
+
+---
+
+### Solution
+
+First of all we need to enable the *NGINX Ingress* controller:
+
+```bash
+minikube addons enable ingress
+```
+
+Verify that *Ingress* is running:
+
+```bash
+kubectl get pods -n ingress-nginx
+---->
+NAME                                       READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-6pxf4       0/1     Completed   0          5m20s
+ingress-nginx-admission-patch-v9jzz        0/1     Completed   1          5m20s
+ingress-nginx-controller-9cc49f96f-b82gm   1/1     Running     0          5m20s
+```
+
+Then we can deploy simple app (we're using deployment and service from Task2):
+```yml
+#deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 2 #previous: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:1.29
+        name: nginx
+        resources: {}
+status: {}
+```
+```yml
+#service
+service:
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30036
+    protocol: TCP
+```
+
+Let's deploy our objects:
+
+```bash
+kubectl apply -f deployment.yml
+kubectl apply -f service.yml
+```
+
+And check if the service is created and available on a node port:
+
+```bash
+kubectl get service nginx-service
+---->
+NAME            TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+nginx-service   NodePort   10.104.37.162   <none>        80:30036/TCP   63s
+```
+
+Visit the service  via node port:
+
+```bash
+minikube service nginx-service
+```
+We can use web browser to see welcome page from nginx (http://192.168.49.2:30036)
+
+Let's create an Ingress file:
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+spec:
+  rules:
+  - host: local.example
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: nginx-service
+            port: 
+              number: 80
+```
+
+And apply the Ingress object:
+
+```bash
+kubectl apply -f ingress.yml
+```
+
+Let's verify the IP address:
+
+```bash
+kubectl get ingress
+---->
+NAME            CLASS   HOSTS           ADDRESS        PORTS   AGE
+nginx-ingress   nginx   local.example   192.168.49.2   80      21m
+```
+
+Also we can add *local.example*  to an **/etc/hosts** file:
+
+```bash
+192.168.49.2  local.example
+```
+Then we can visit http://local.example to confirm ingress configuration!
