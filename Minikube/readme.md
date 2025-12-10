@@ -416,3 +416,15 @@ spec:
 ```
 
 Minikube will automatically create a PV in the Minikube host directory (~/.minikube/...), which will survive a VM restart.
+
+
+
+## Task 6 — Ingress []
+
+- Install an Ingress Controller in Minikube.
+- Expose the application from Task 2 using an Ingress.
+- Configure a custom hostname and verify access through it.
+
+---
+
+### Solution
