@@ -419,7 +419,7 @@ Minikube will automatically create a PV in the Minikube host directory (~/.minik
 
 
 
-## Task 6 — Ingress []
+## Task 6 — Ingress [v]
 
 - Install an Ingress Controller in Minikube.
 - Expose the application from Task 2 using an Ingress.
