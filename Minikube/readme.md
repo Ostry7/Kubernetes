@@ -568,7 +568,7 @@ Also we can add *local.example*  to an **/etc/hosts** file:
 ```
 Then we can visit http://local.example to confirm ingress configuration!
 
-## Task 7 — Multi-component Application
+## Task 7 — Multi-component Application[]
 
 - Prepare a 3-tier application: frontend, backend, and database.
 - Run the frontend and backend using Deployments; run the database using a StatefulSet.
@@ -576,3 +576,170 @@ Then we can visit http://local.example to confirm ingress configuration!
 - Expose the frontend using Ingress.
 
 ---
+
+### Solution
+
+**1. MySQL**
+
+To achieve goal in this task first we need to create a MySQL deployment. Avoiding some mess in code let's create a namespace indicator for only this task.
+
+```yml
+#namespace.yml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: triple-stack
+```
+Next we can use our *triple-stack* in the code:
+
+```yml
+#deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: triple-stack
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        resources: {}
+```
+
+Right now let's create *configMap* and *secrets* to provide all required variables to launch MySQL:
+
+```yml
+#secret.yml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secrets
+  namespace: triple-stack
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: dGVzdHBhc3N3b3JkMTIzIQ==
+  MYSQL_USER: bG9vc2Vy
+  MYSQL_PASSWORD: bG9vc2VyMTIzIQ== 
+```
+```yml
+#configmap.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: triple-stack
+data:
+  MYSQL_DATABASE: "maindb"
+```
+
+Then we need to create a *persistentVolume* for all MySQL data: login to the minikube and create dir for mysql data.
+
+```bash
+minikube ssh
+---->
+docker@minikube:~$ sudo mkdir -p /data/mysql
+docker@minikube:~$ sudo chmod 777 /data/mysql
+```
+After creating the catalog in minikube host we can create *persistentVolume* and *persistentVolumeClaim* files:
+
+```yml
+#static-pv.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+  namespace: triple-stack
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mysql
+```
+```yml
+#static-pvc.yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: triple-stack
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+```
+Lastly we need to create *service* for MySQL:
+
+```yml
+#service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: triple-stack
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+```
+
+We are ready to apply all codes.
+
+> ⚠️ **Main apply sequence:**
+> 1. Namespace.
+> 2. Secret.
+> 3. ConfigMap.
+> 4. PersistentVolume.
+> 5. PersistentVolumeClaim.
+> 6. Deployment.
+> 7. Service.
+
+After applying all objects we need to check if it's working properly. When we set a namespace we need to add *-n [namespace]* to commands:
+```bash
+kubectl get pods -n triple-stack
+---->
+NAME                     READY   STATUS    RESTARTS   AGE
+mysql-64bbbc5ff7-92v9v   1/1     Running   0          60s
+```
+
+Let's login to mysql (using our credentials in secrets.yml):
+```bash
+kubectl exec -it mysql-64bbbc5ff7-92v9v -n triple-stack -- mysql -u looser -p
+---->
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 10
+Server version: 9.5.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| maindb             |
+| performance_schema |
++--------------------+
+3 rows in set (0.016 sec)
+```
+Looks the MySQL is working properly!
