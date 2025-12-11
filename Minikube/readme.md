@@ -315,13 +315,12 @@ data:
 To use configmap variables do the following:
 
 ```yml
-
-```
       env:
           valueFrom:
             configMapKeyRef:
               name: mysql-configmap
               key: MYSQL_DATABASE
+```
 
 ---
 ### Secrets
