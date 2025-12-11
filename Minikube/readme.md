@@ -312,6 +312,17 @@ data:
 ```
 `ConfigMap` is related with *POD* and not related with container. So that container could use `ConfigMap` we need to specify it at `env:` section in `deployment`.
 
+To use configmap variables do the following:
+
+```yml
+
+```
+      env:
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-configmap
+              key: MYSQL_DATABASE
+
 ---
 ### Secrets
 Kubernetes Secrets are objects used to store and manage sensitive information such as passwords, OAuth tokens, SSH keys, and API keys. The primary purpose of Secrets is to reduce the risk of exposing sensitive data while deploying applications on Kubernetes.
