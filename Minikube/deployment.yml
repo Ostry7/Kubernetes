@@ -1,25 +1,25 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: nginx
-  name: nginx
-spec:
-  replicas: 2 #previous: 1
-  selector:
-    matchLabels:
-      app: nginx
-  strategy: {}
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - image: nginx:1.29
-        name: nginx
-        resources: {}
-status: {}
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  labels:
+#    app: nginx
+#  name: nginx
+#spec:
+#  replicas: 2 #previous: 1
+#  selector:
+#    matchLabels:
+#      app: nginx
+#  strategy: {}
+#  template:
+#    metadata:
+#      labels:
+#        app: nginx
+#    spec:
+#      containers:
+#      - image: nginx:1.29
+#        name: nginx
+#        resources: {}
+#status: {}
 
 
 ###Task 4/5
@@ -97,3 +97,22 @@ status: {}
 #        persistentVolumeClaim:
 #          claimName: mongo-claim
 
+# Task 7 - triple-stack
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        resources: {}

@@ -557,3 +557,12 @@ Also we can add *local.example*  to an **/etc/hosts** file:
 192.168.49.2  local.example
 ```
 Then we can visit http://local.example to confirm ingress configuration!
+
+## Task 7 — Multi-component Application
+
+- Prepare a 3-tier application: frontend, backend, and database.
+- Run the frontend and backend using Deployments; run the database using a StatefulSet.
+- Use a single ConfigMap and a single Secret for configuration.
+- Expose the frontend using Ingress.
+
+---
