@@ -6,3 +6,9 @@
 #data:
 #  ME_CONFIG_BASICAUTH_ENABLED: "true"
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql
+data:
+  MYSQL_DATABASE: "maindb"
