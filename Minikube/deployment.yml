@@ -164,7 +164,7 @@ spec:
         - containerPort: 3000
         env:
           - name: DB_HOST
-            value: "mysql"
+            value: mysql-service
           - name: DB_PORT
             value: "3306"
           - name: DB_USER

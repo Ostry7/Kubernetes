@@ -4,7 +4,7 @@ import mysql from "mysql2/promise";
 const app = express();
 
 const dbConfig = {
-  host: process.env.DB_HOST || "mysql",
+  host: process.env.DB_HOST || "mysql-service",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE || "maindb",
@@ -29,4 +29,5 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Backend działa na porcie 3000"));
+// ✅ Klucz: nasłuch na 0.0.0.0, aby był dostępny z zewnątrz Poda
+app.listen(3000, "0.0.0.0", () => console.log("Backend działa na porcie 3000"));

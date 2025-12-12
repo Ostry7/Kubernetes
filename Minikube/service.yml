@@ -53,3 +53,19 @@ spec:
   ports:
   - port: 3306
 
+---
+#Backend
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: triple-stack
+spec:
+  selector:
+    app: myapp-backend
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+
