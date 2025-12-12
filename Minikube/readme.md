@@ -743,3 +743,106 @@ mysql> SHOW DATABASES;
 3 rows in set (0.016 sec)
 ```
 Looks the MySQL is working properly!
+
+**2. Backend**
+
+We'll need to create a Dockerfile with some basic nodejs backend code:
+
+```javascript
+/*#backend/server.js*/
+import express from "express";
+import mysql from "mysql2/promise";
+
+const app = express();
+
+const dbConfig = {
+  host: process.env.DB_HOST || "mysql-service",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE || "maindb",
+  port: process.env.DB_PORT || 3306,
+};
+
+app.get("/health", async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.query("SELECT NOW() AS now");
+    await connection.end();
+
+    res.json({
+      status: "ok",
+      mysql_time: rows[0].now,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      error: err.message,
+    });
+  }
+});
+
+app.listen(3000, "0.0.0.0", () => console.log("Backend działa na porcie 3000"));
+```
+```json
+/*backend/package.json*/
+{
+  "name": "minimal-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.11.0"
+  }
+}
+```
+and finally we can create a `Dockerfile`:
+
+```yml
+#backend/Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
+```
+
+After all we need to build docker image:
+```bash
+docker build -t minimal-backend:1.0 .
+```
+
+and we are able to load image to minikube:
+```bash
+minikube image load minimal-backend:1.0
+```
+...and apply all K8s objects:
+```bash
+kubectl apply -f ./namespace.yml
+kubectl apply -f ./secret.yml
+kubectl apply -f ./configmap.yml
+kubectl apply -f ./deployment.yml
+kubectl apply -f ./service.yml
+```
+
+_Backend test:_
+```bash
+kubectl port-forward svc/backend-service 3000:3000 -n triple-stack
+---->
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+Handling connection for 3000
+```
+```bash
+curl http://localhost:3000/health
+---->
+{"status":"ok","mysql_time":"2025-12-12T12:34:48.000Z"}
+```
+MySQL+Backend working properly!
