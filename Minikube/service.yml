@@ -41,6 +41,7 @@
 #    nodePort: 30081
 
 
+#MySQL
 apiVersion: v1
 kind: Service
 metadata:
@@ -52,4 +53,3 @@ spec:
   ports:
   - port: 3306
 
-  
