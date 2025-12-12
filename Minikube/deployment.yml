@@ -99,6 +99,7 @@
 
 # Task 7 - triple-stack
 
+#MySQL
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -138,3 +139,47 @@ spec:
               configMapKeyRef:
                 name: mysql-configmap
                 key: MYSQL_DATABASE
+---
+
+#Backend -> nodejs
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-backend
+  namespace: triple-stack
+spec:
+  selector:
+    matchLabels:
+      app: myapp-backend
+  template:
+    metadata:
+      labels:
+        app: myapp-backend
+    spec:
+      containers:
+      - name: myapp-backend
+        image: minimal-backend:1.0
+        resources: {}
+        ports:
+        - containerPort: 3000
+        env:
+          - name: DB_HOST
+            value: "mysql"
+          - name: DB_PORT
+            value: "3306"
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key:  MYSQL_USER
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key:  MYSQL_PASSWORD
+          - name: DB_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: mysql-configmap
+                key: MYSQL_DATABASE
+
