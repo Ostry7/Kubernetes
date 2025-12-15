@@ -159,6 +159,7 @@ spec:
       containers:
       - name: myapp-backend
         image: minimal-backend:1.0
+        imagePullPolicy: IfNotPresent
         resources: {}
         ports:
         - containerPort: 3000
@@ -183,3 +184,30 @@ spec:
                 name: mysql-configmap
                 key: MYSQL_DATABASE
 
+---
+#frontend
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-frontend
+  namespace: triple-stack
+spec:
+  selector:
+    matchLabels:
+      app: myapp-frontend
+  template:
+    metadata:
+      labels:
+        app: myapp-frontend
+    spec:
+      containers:
+      - name: myapp-frontend
+        image: minimal-frontend:1.0
+        imagePullPolicy: IfNotPresent
+        resources: {}
+        ports:
+        - containerPort: 80
+        env:
+        - name: BACKEND_URL
+          value: http://backend-service:3000

@@ -5,26 +5,23 @@
   <title>3-tier app</title>
 </head>
 <body>
-<script>
-  window.BACKEND_URL = "__BACKEND_URL__";
-</script>
-
   <h1>Frontend działa</h1>
   <button onclick="checkBackend()">Sprawdź backend</button>
   <pre id="result"></pre>
 
-  <script>
-    async function checkBackend() {
-      try {
-        const res = await fetch(window.BACKEND_URL + "/health");
-        const data = await res.json();
-        document.getElementById("result").textContent =
-          JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById("result").textContent =
-          "Błąd: " + err;
-      }
+<script>
+  async function checkBackend() {
+    try {
+      const res = await fetch("/api/health");
+      const data = await res.json();
+      document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+    } catch (err) {
+      document.getElementById("result").textContent =
+        "Błąd: " + err;
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>

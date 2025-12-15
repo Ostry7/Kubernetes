@@ -69,3 +69,17 @@ spec:
     protocol: TCP
   type: ClusterIP
 
+---
+#frontend
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: frontend-service
+    namespace: triple-stack
+  spec:
+    selector:
+      app: myapp-frontend
+    ports:
+    - port: 80
+      targetPort: 80
+    type: NodePort
