@@ -568,7 +568,7 @@ Also we can add *local.example*  to an **/etc/hosts** file:
 ```
 Then we can visit http://local.example to confirm ingress configuration!
 
-## Task 7 — Multi-component Application[]
+## Task 7 — Multi-component Application[v]
 
 - Prepare a 3-tier application: frontend, backend, and database.
 - Run the frontend and backend using Deployments; run the database using a StatefulSet.
@@ -783,8 +783,8 @@ app.get("/health", async (req, res) => {
 
 app.listen(3000, "0.0.0.0", () => console.log("Backend działa na porcie 3000"));
 ```
+```backend/package.json:```
 ```json
-/*backend/package.json*/
 {
   "name": "minimal-backend",
   "version": "1.0.0",
@@ -846,3 +846,100 @@ curl http://localhost:3000/health
 {"status":"ok","mysql_time":"2025-12-12T12:34:48.000Z"}
 ```
 MySQL+Backend working properly!
+
+
+**3. Frontend**
+
+To start working on frontend let's first create a frontend files:
+
+```html
+<!--frontend/index.html-->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>3-tier app</title>
+</head>
+<body>
+  <h1>Frontend działa</h1>
+  <button onclick="checkBackend()">Sprawdź backend</button>
+  <pre id="result"></pre>
+
+<script>
+  async function checkBackend() {
+    try {
+      const res = await fetch("/api/health");
+      const data = await res.json();
+      document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+    } catch (err) {
+      document.getElementById("result").textContent =
+        "Błąd: " + err;
+    }
+  }
+</script>
+
+</body>
+</html>
+```
+
+```
+#/frontend/nginx.conf
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://backend-service:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+```yml
+FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY index.html /usr/share/nginx/html/index.html
+
+```
+
+After all we need to build docker image:
+```bash
+docker build -t minimal-frontend:1.0 .
+```
+
+and we are able to load image to minikube:
+```bash
+minikube image load minimal-frontend:1.0
+```
+...and apply all K8s objects:
+```bash
+kubectl apply -f ./namespace.yml
+kubectl apply -f ./secret.yml
+kubectl apply -f ./configmap.yml
+kubectl apply -f ./deployment.yml
+kubectl apply -f ./service.yml
+```
+
+_Frontend test:_
+```bash
+minikube service frontend-service -n triple-stack
+---->
+┌──────────────┬──────────────────┬─────────────┬───────────────────────────┐
+│  NAMESPACE   │       NAME       │ TARGET PORT │            URL            │
+├──────────────┼──────────────────┼─────────────┼───────────────────────────┤
+│ triple-stack │ frontend-service │ 80          │ http://192.168.49.2:30534 │
+└──────────────┴──────────────────┴─────────────┴───────────────────────────┘
+```
+
+Let's open the browser and check:
+
+![frontend-url](image.png)
