@@ -945,10 +945,114 @@ Let's open the browser and check:
 ![frontend-url](image.png)
 ---
 
-## Task 8 — Horizontal Pod Autoscaler
+## Task 8 — Horizontal Pod Autoscaler [v]
 
 - Install and configure the metrics-server.
 - Add an HPA to the application from Task 7.
 - Generate load and verify that autoscaling works.
 
 ---
+
+## Kubernetes Metrics Server
+
+### Overview
+
+Metrics Server is a lightweight, scalable service that provides container resource metrics to Kubernetes, primarily for autoscaling purposes.
+
+It gathers resource usage information from Kubelets and exposes it through the Metrics API in the Kubernetes API server. This data can be used by Horizontal Pod Autoscaler (HPA) and Vertical Pod Autoscaler (VPA). Additionally, it enables `kubectl top` commands for easier debugging of autoscaling setups.
+
+### Important Note
+
+Metrics Server is designed exclusively for autoscaling. It should not be used as a source for monitoring systems. For external monitoring, metrics should be collected directly from the Kubelet `/metrics/resource` endpoint.
+
+## Key Features
+
+- Single deployment compatible with most clusters (see requirements).
+- Metrics collection every 15 seconds for rapid autoscaling.
+- Lightweight: consumes \~1 millicore of CPU and 2 MB of memory per node.
+- Supports clusters up to 5,000 nodes.
+
+## Use Cases
+
+- CPU/Memory-based horizontal pod autoscaling.
+- Resource adjustments and recommendations for containers using VPA.
+
+## Limitations / When Not to Use
+
+- Non-Kubernetes clusters.
+- Reliable source for full resource usage metrics.
+- Autoscaling based on resources other than CPU or memory.
+
+For unsupported scenarios, consider using full monitoring solutions like Prometheus.
+
+To install `mertics-server` run:
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+Then we can prepare yml file with HPA (Horizontal Pod Autoscaler):
+```yml
+#autoscaling.yml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-mysql-triple-stack
+  namespace: triple-stack
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mysql
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 3 #3%
+```
+and need to add resource limits on our deployment:
+```yml
+#deployment.yml
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+```
+Let's apply the changes:
+```bash
+kubectl apply -f ./autoscaling.yml
+kubectl apply -f ./deployment.yml
+```
+To check if HPA works properly we need to make some overload:
+
+```bash
+while true; do wget -q -O- http://192.168.49.2:30534; done
+```
+It's a while loop which will generate traffic to our frontend. Now we can check the HPA status:
+```bash
+kubectl get hpa -n triple-stack --watch
+---->
+NAME                        REFERENCE                   TARGETS             MINPODS   MAXPODS   REPLICAS   AGE
+hpa-backend-triple-stack    Deployment/myapp-backend    cpu: 2%/5%          1         3         1          13m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 0%/5%          1         3         1          12m
+hpa-mysql-triple-stack      Deployment/mysql            cpu: <unknown>/3%   1         3         1          15m
+hpa-mysql-triple-stack      Deployment/mysql            cpu: 265%/3%        1         3         1          15m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 38%/5%         1         3         1          12m
+hpa-backend-triple-stack    Deployment/myapp-backend    cpu: 1%/5%          1         3         1          13m
+hpa-mysql-triple-stack      Deployment/mysql            cpu: 5%/3%          1         3         3          16m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 47%/5%         1         3         3          12m
+hpa-mysql-triple-stack      Deployment/mysql            cpu: 4%/3%          1         3         3          16m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 21%/5%         1         3         3          12m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 23%/5%         1         3         3          13m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 2%/5%          1         3         3          13m
+hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 0%/5%          1         3         3          13m
+```
+
+As we can observe after peak of traffic the HPA created more replicas of our frontend service.
