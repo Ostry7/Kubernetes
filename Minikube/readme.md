@@ -948,7 +948,7 @@ Let's open the browser and check:
 ## Task 8 — Horizontal Pod Autoscaler
 
 - Install and configure the metrics-server.
-- Add an HPA to the application from Task 2.
+- Add an HPA to the application from Task 7.
 - Generate load and verify that autoscaling works.
 
 ---
