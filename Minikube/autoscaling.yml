@@ -1,7 +1,8 @@
+#mysql HPA
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: hpa-triple-stack
+  name: hpa-mysql-triple-stack
   namespace: triple-stack
 spec:
   scaleTargetRef:
@@ -16,5 +17,29 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 3
-        
+        averageUtilization: 3 #3% -> TEST
+
+
+---
+#backend HPA
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-backend-triple-stack
+  namespace: triple-stack
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp-backend
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 5  #5% -> TEST
+
+
