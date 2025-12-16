@@ -943,3 +943,12 @@ minikube service frontend-service -n triple-stack
 Let's open the browser and check:
 
 ![frontend-url](image.png)
+---
+
+## Task 8 — Horizontal Pod Autoscaler
+
+- Install and configure the metrics-server.
+- Add an HPA to the application from Task 2.
+- Generate load and verify that autoscaling works.
+
+---
