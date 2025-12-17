@@ -1056,3 +1056,13 @@ hpa-frontend-triple-stack   Deployment/myapp-frontend   cpu: 0%/5%          1   
 ```
 
 As we can observe after peak of traffic the HPA created more replicas of our frontend service.
+
+## Task 9 — Monitoring
+
+- Install Prometheus + Grafana (e.g., using Helm).
+- Configure a dashboard that monitors:
+  - nodes,
+  - pods,
+  - CPU and RAM usage.
+
+---
