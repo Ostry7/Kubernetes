@@ -1083,3 +1083,26 @@ helm version
 ---->
 version.BuildInfo{Version:"v3.19.3", GitCommit:"XXXX", GitTreeState:"clean", GoVersion:"go1.24.10"}
 ```
+
+Once we have installed helm we can find proper helm charts using https://artifacthub.io/ (we need to find Prometheus) and then click "install":
+![alt text](image-1.png)
+
+
+There is a need to add prometheus repo:
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+```
+and install Prometheus chart:
+```bash
+helm install my-prometheus prometheus-community/prometheus --version 28.0.0
+```
+Once it's installed we can expand prometheus address by:
+```bash
+Get the Prometheus server URL by running these commands in the same shell:
+  export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=my-local-prometheus" -o jsonpath="{.items[0].metadata.name}")
+  kubectl --namespace default port-forward $POD_NAME 9090
+```
+
+and now we are able to visit Prometheus server -> http://127.0.0.1:9090
+
+![alt text](image-2.png)
