@@ -1108,7 +1108,7 @@ and now we are able to visit Prometheus server -> http://127.0.0.1:9090
 ![alt text](image-2.png)
 
 
-## Task 9 — Helm Charts and Custom values.yaml
+## Task 10 — Helm Charts and Custom values.yaml [v]
 
 - Create your own Helm chart for a simple web application (e.g., Nginx).
 - Use Helm templating in the manifests (Deployment and Service) so that key parameters (replica count, image version, Service type and port, container port) are driven from the values.yaml file.
@@ -1120,3 +1120,121 @@ and now we are able to visit Prometheus server -> http://127.0.0.1:9090
   - Install the chart in a Kubernetes cluster separately for dev and prod environments (in different namespaces), using the respective custom values files.
   - Verify that the resources were created according to the overridden values (replica count, Service type, image version, etc.).
 
+### Solution:
+
+1. To create an own Helm chart we can use below command:
+```bash
+helm create my-nginx-chart
+```
+It'll create a skeleton helm chart (with all files and dependencies).
+
+2. Next we need to create the prod-values.yaml and preprod-values.yaml files for our purposes:
+```yaml
+#prod
+replicaCount: 5
+
+image:
+  repository: nginx
+  tag: "1.25"
+
+service: 
+  type: LoadBalancer
+  port: 8080
+
+containerPort: 80
+```
+```yaml
+#preprod
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "latest"
+
+service: 
+  type: NodePort
+  port: 80
+```
+
+3. We can perform some checks before chart installation:
+
+```bash
+helm template my-release ./my-nginx-chart --values prod-values.yaml
+---->
+
+# Source: my-nginx-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-release-my-nginx-chart
+  labels:
+    helm.sh/chart: my-nginx-chart-0.1.0
+    app.kubernetes.io/name: my-nginx-chart
+    app.kubernetes.io/instance: my-release
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: my-nginx-chart
+    app.kubernetes.io/instance: my-release
+---
+# Source: my-nginx-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-release-my-nginx-chart
+  labels:
+    helm.sh/chart: my-nginx-chart-0.1.0
+    app.kubernetes.io/name: my-nginx-chart
+    app.kubernetes.io/instance: my-release
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-nginx-chart
+      app.kubernetes.io/instance: my-release
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: my-nginx-chart-0.1.0
+        app.kubernetes.io/name: my-nginx-chart
+        app.kubernetes.io/instance: my-release
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: my-release-my-nginx-chart
+      containers:
+        - name: my-nginx-chart
+          image: "nginx:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+```
+
+4. After checks we can install chart:
+
+```bash
+helm install my-prod-nginx ./my-nginx-chart --values prod-values.yaml --namespace prod --create-namespace
+---->
+NAME: my-prod-nginx
+LAST DEPLOYED: Wed Jan  7 15:28:08 2026
+NAMESPACE: prod
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch its status by running 'kubectl get --namespace prod svc -w my-prod-nginx-my-nginx-chart'
+  export SERVICE_IP=$(kubectl get svc --namespace prod my-prod-nginx-my-nginx-chart --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+  echo http://$SERVICE_IP:8080
+```
