@@ -1106,3 +1106,17 @@ Get the Prometheus server URL by running these commands in the same shell:
 and now we are able to visit Prometheus server -> http://127.0.0.1:9090
 
 ![alt text](image-2.png)
+
+
+## Task 9 — Helm Charts and Custom values.yaml
+
+- Create your own Helm chart for a simple web application (e.g., Nginx).
+- Use Helm templating in the manifests (Deployment and Service) so that key parameters (replica count, image version, Service type and port, container port) are driven from the values.yaml file.
+- Prepare at least two custom values files:
+  - `dev-values.yaml` – e.g., 2 replicas, image nginx:1.21, Service type NodePort.
+  - `prod-values.yaml` – e.g., 5 replicas, image nginx:latest, Service type LoadBalancer, different port.
+- Test the chart:
+  - Render the manifests using `helm template` with each of the custom values files.
+  - Install the chart in a Kubernetes cluster separately for dev and prod environments (in different namespaces), using the respective custom values files.
+  - Verify that the resources were created according to the overridden values (replica count, Service type, image version, etc.).
+
