@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-blue
+  namespace: blue-green-deployment
   labels:
     version: v1
 spec:
@@ -22,3 +23,5 @@ spec:
         resources: {}
         ports:
         - containerPort: 80
+
+
