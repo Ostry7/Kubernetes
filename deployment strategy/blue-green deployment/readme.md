@@ -63,3 +63,55 @@ spec:
 ```
 
 ![alt text](image.png)
+
+As we can see in `Server: nginx/1.25` we have v1 (blue) of our app. Let's create a green version. We need to add green section to our `deployment.yml` file.
+
+```yaml
+#green deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-green
+  namespace: blue-green-deployment
+  labels:
+    version: v2
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: v2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.28
+        resources: {}
+        ports:
+        - containerPort: 80
+```
+
+Also we need to change the `service.yml` to direct all traffic to v2 of the app.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: blue-green-deployment
+spec:
+  selector:
+    app: nginx
+  # version: v1
+    version: v2
+  ports:
+  - port: 8080
+    targetPort: 80
+```
+
+After applying `service.yml` and `deployment.yml` we can observe that all incoming traffic is directed to the v2 of app (`Server: nginx/1.28.1`):
+![alt text](image-1.png)

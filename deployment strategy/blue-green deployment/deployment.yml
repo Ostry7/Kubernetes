@@ -25,3 +25,29 @@ spec:
         - containerPort: 80
 
 
+#green deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-green
+  namespace: blue-green-deployment
+  labels:
+    version: v2
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: v2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.28
+        resources: {}
+        ports:
+        - containerPort: 80
