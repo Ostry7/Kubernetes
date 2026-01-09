@@ -1238,3 +1238,103 @@ NOTES:
   export SERVICE_IP=$(kubectl get svc --namespace prod my-prod-nginx-my-nginx-chart --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
   echo http://$SERVICE_IP:8080
 ```
+
+
+# Task 11 — Kubernetes Jobs and CronJobs [v]
+
+- Create a simple one-time **Job** and a **Job** with multiple completions (using `completions` + `parallelism`).
+- Create a **CronJob** that runs on a schedule and executes a basic command.
+- Observe behavior, statuses, logs, and automatic pod creation by Kubernetes.
+- Learn how to clean up Jobs/CronJobs and their completed instances.
+
+## Solution
+
+### 1. Simple One-Time Job
+
+Basic version with echo + sleep:
+
+```yaml
+# jobs.yml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: busybox-job1
+spec:
+  template:
+    spec:
+      containers:
+      - name: busybox-1
+        image: busybox:latest
+        command: ["/bin/sh", "-c", "echo 'Hello from Job!' && sleep 10"]
+      restartPolicy: Never
+
+Useful commands:
+```bash
+kubectl apply -f jobs.yml
+kubectl get jobs -w
+kubectl get pods -w
+kubectl logs busybox-job1-xxxxx          # pod name from get pods
+```
+
+### 2. Job with Multiple Completions & Parallelism
+
+```yaml
+# jobs.yml (advanced version)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: busybox-job1
+spec:
+  completions: 5           # must successfully complete 5 times
+  parallelism: 2           # maximum 2 pods running at the same time
+  backoffLimit: 4          # how many retries after failure (optional)
+  template:
+    spec:
+      containers:
+      - name: busybox-1
+        image: busybox:latest
+        command: ["/bin/sh", "-c", "echo 'exec number $((JOB_COMPLETION_INDEX+1)) of 5' && sleep 3"]
+      restartPolicy: Never
+```
+
+**What happens?**
+
+- 2 pods start at the same time (parallelism = 2)
+- When one finishes → next one starts immediately
+- In total you will see 5 completed pods numbered 1–5
+---
+
+### 3. CronJob - Daily / Periodic Execution
+
+Simple example:
+```yaml
+# cronjobs.yml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: busybox-cronjob1
+spec:
+  schedule: "*/2 * * * *"     # every 2 minutes
+  # schedule: "0 4 * * *"     # original: every day at 04:00
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            command:
+            - /bin/sh
+            - -c
+            - date; echo "Hello from the Kubernetes cluster"
+          restartPolicy: OnFailure
+```
+
+*Apply and observe:*
+```bash
+kubectl apply -f cronjobs.yml
+kubectl get cronjobs
+kubectl get jobs -w               # new Jobs appear according to schedule
+kubectl get pods -w
+kubectl logs busybox-cronjob1-1234567890-xxxxx
+```
