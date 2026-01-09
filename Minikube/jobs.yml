@@ -3,11 +3,12 @@ kind: Job
 metadata:
   name: busybox-job1
 spec:
+  completions: 5
+  parallelism: 2
   template:
     spec:
-      activeDeadlineSeconds: 10
       containers:
       - name: busybox-1
         image: busybox:latest
-        command: ["/bin/sh", "-c", "echo 'print hello world!' && sleep 20"]
+        command: ["/bin/sh", "-c", "echo 'exec number X of 5'"]
       restartPolicy: Never
